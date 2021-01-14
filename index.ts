@@ -10,8 +10,8 @@ export namespace A08Server {
 
         private db: Mongo.MongoClient | null = null;
         private userCollection: Mongo.Collection | null = null;
-        private db_name: string = "abgabe3";
-        private mongodb_connection_url: string = "mongodb://localhost:27017";
+        private db_name: string = "phillip";
+        private mongodb_connection_url: string = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/<dbname>?retryWrites=true&w=majority";
 
         constructor() {
             console.log("Starting server");
@@ -57,9 +57,9 @@ export namespace A08Server {
         }
 
         private async connectDatabase(): Promise<void> {
-            this.db = new Mongo.MongoClient(this.mongodb_connection_url);
+            this.db = new Mongo.MongoClient(this.mongodb_connection_url, { useNewUrlParser: true });
             await this.db.connect();
-            this.userCollection = this.db.db(this.db_name).collection("users");
+            this.userCollection = this.db.db(this.db_name).collection("benutzer");
         }
 
         private async handleLogin(params: URLSearchParams): Promise<string> {

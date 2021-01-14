@@ -65,8 +65,8 @@ var A08Server;
         function Server() {
             this.db = null;
             this.userCollection = null;
-            this.db_name = "abgabe3";
-            this.mongodb_connection_url = "mongodb://localhost:27017";
+            this.db_name = "phillip";
+            this.mongodb_connection_url = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/<dbname>?retryWrites=true&w=majority";
             console.log("Starting server");
             this.http_port = Number(process.env.PORT);
             if (!this.http_port)
@@ -131,11 +131,11 @@ var A08Server;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            this.db = new Mongo.MongoClient(this.mongodb_connection_url);
+                            this.db = new Mongo.MongoClient(this.mongodb_connection_url, { useNewUrlParser: true });
                             return [4 /*yield*/, this.db.connect()];
                         case 1:
                             _a.sent();
-                            this.userCollection = this.db.db(this.db_name).collection("users");
+                            this.userCollection = this.db.db(this.db_name).collection("benutzer");
                             return [2 /*return*/];
                     }
                 });
