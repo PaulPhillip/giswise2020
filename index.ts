@@ -11,7 +11,7 @@ export namespace A08Server {
         private db: Mongo.MongoClient | null = null;
         private userCollection: Mongo.Collection | null = null;
         private db_name: string = "phillip";
-        private mongodb_connection_url: string = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/<dbname>?retryWrites=true&w=majority";
+        private mongodb_connection_url: string = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/"+this.db_name+"?retryWrites=true&w=majority";
 
         constructor() {
             console.log("Starting server");

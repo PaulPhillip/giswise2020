@@ -66,7 +66,7 @@ var A08Server;
             this.db = null;
             this.userCollection = null;
             this.db_name = "phillip";
-            this.mongodb_connection_url = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/<dbname>?retryWrites=true&w=majority";
+            this.mongodb_connection_url = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/" + this.db_name + "?retryWrites=true&w=majority";
             console.log("Starting server");
             this.http_port = Number(process.env.PORT);
             if (!this.http_port)
