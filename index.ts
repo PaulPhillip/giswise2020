@@ -3,134 +3,128 @@ import * as Mongo from "mongodb";
 import {IncomingMessage, ServerResponse} from "http";
 import {URL} from "url";
 
-export namespace A08Server {
+export namespace Server {
 
-    export class Server {
+    export class ServerKlasse {
+        
         private readonly http_port: number;
-
-        private db: Mongo.MongoClient | null = null;
-        private userCollection: Mongo.Collection | null = null;
-        private db_name: string = "phillip";
-        private mongodb_connection_url: string = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/"+this.db_name+"?retryWrites=true&w=majority";
+        private db: Mongo.MongoClient | null = null; /*Null weil server noch nicht gestartet*/
+        private nutzerCollection: Mongo.Collection | null = null; /*Findet collection nicht da server nicht gestartet, daher null*/
+        private dbName: string = "phillip";
+        private mongodbVerbindungsURL: string = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/"+this.dbName+"?retryWrites=true&w=majority";
 
         constructor() {
-            console.log("Starting server");
-            this.http_port = Number(process.env.PORT);
-            if (!this.http_port)
+            console.log("Starte den Server"); //Ausgabe für mich selbst
+            this.http_port = Number(process.env.PORT);//Übergibt this.http_port den Port der Anfrage
+            if (!this.http_port) //wenn kein Port übergeben wurde dann 8100 port speichern
                 this.http_port = 8100;
-            this.connectDatabase();
-            this.startHttpServer();
+            this.datenbankVerbinden(); //Startet Methode zum Verbinden zum Server
+            this.httpServerStarten(); //Startet Methode zum Erstellen des Servers
         }
 
 
-        private startHttpServer() {
-            Http.createServer(this.onMessage.bind(this)).listen(this.http_port);
+        private httpServerStarten() {
+            Http.createServer(this.ServerAntwort.bind(this)).listen(this.http_port); //Erstellt den Server und bindet an die Methode onMessage, durch das listen befindet er sich in einem dauerzustand und schaltet nicht direkt wieder ab
         }
 
-        private async onMessage(req: IncomingMessage, res: ServerResponse) {
-            console.log("Message received: ", req.url);
-            let responseText = '404';
-            if (req.url === "/") {
-                res.write(responseText);
-                res.end();
+        private async ServerAntwort(req: IncomingMessage, res: ServerResponse) { //asynchrone Methode, da wir auf den server warten, es wird Incomingmessage übergeben, sowie die Server Antwort
+            console.log("Nachricht angekommen: ", req.url); //um die requeste Url anzuzeigen.
+            let antwortText = 'URL ist falsch'; //Ausgabe wird hier gespeichert, standardmäßig schon ein URL ist falsch
+            if (req.url === "/") { //falls URL leer ist 
+                res.write(antwortText); //schreibe die Server Antwort
+                res.end(); //und beende die response
                 return;
             }
-            try {
-                let url = new URL(<string>req.url, "http://localhost:" + this.http_port);
+            
+                let url = new URL(<string>req.url, "http://localhost:" + this.http_port); //Neues Objekt URL angelegt, dem wird die requested url übergeben, sowie eine base namens Localhost mit dem Port angehängt.
 
-                switch (url.pathname) {
-                    case "/login":
-                        responseText = await this.handleLogin(url.searchParams);
+                switch (url.pathname) { //switch case um die verschiedenen urls zu filtern
+                    case "/login": //bei /login wird handlelogin ausgeführt
+                        antwortText = await this.loginMethode(url.searchParams); //handlelogin wird aufgerufen und es werden die Parameter der angefragten url übergeben, die antwort der methode wird in responsetext gespeichert
                         break;
-                    case "/register":
-                        responseText = await this.handleRegister(url.searchParams);
+                    case "/register": //bei /login wird handlelogin ausgeführt
+                        antwortText = await this.registrierMethode(url.searchParams); //das selbe nur für die handleregisterMethode
                         break;
-                    case "/list":
-                        responseText = await this.getUserList();
+                    case "/liste":
+                        antwortText = await this.getBenutzerMethode(); //das selbe nur für die userlist methode
                         break;
                 }
-            } catch (e) {
-                console.log(e);
-            }
-            res.write(responseText);
-            res.end();
+            
+            res.write(antwortText); //wird and den client zurückgegeben
+            res.end(); //beendet den responseprozess
         }
 
-        private async connectDatabase(): Promise<void> {
-            this.db = new Mongo.MongoClient(this.mongodb_connection_url, { useNewUrlParser: true });
-            await this.db.connect();
-            this.userCollection = this.db.db(this.db_name).collection("benutzer");
+        private async datenbankVerbinden(): Promise<void> { //methode um mit der datenbank zu verbinden
+            this.db = new Mongo.MongoClient(this.mongodbVerbindungsURL, { useNewUrlParser: true }); //anlegen der MongoDb variable, beinhaltet mongo db link mit passwort und login zur DB
+            await this.db.connect(); //wartet darauf mit der db zu verbinden
+            this.nutzerCollection = this.db.db(this.dbName).collection("benutzer"); //speichert die collection benutzen in usercollection
         }
 
-        private async handleLogin(params: URLSearchParams): Promise<string> {
-            if (!this.userCollection) {
-                return "db_error";
+        private async loginMethode(params: URLSearchParams): Promise<string> { //die parameter der url werden übergeben und es wird ein string zurückgegeben
+            if (!this.nutzerCollection) { // wenn die usercollection nicht vorhanden, dann db error
+                return "Fehler mit der Datenbank";
             }
-            let psw = params.get('password');
-            let email = params.get('email');
-            if (!psw || !email) {
+            let passwortVonUebergebeneAnfrage = params.get('password'); //ansonsten speichere in die variable psw, email die parameter von password und email die beim login übergeben wurden
+            let emailVonUebergebeneAnfrage = params.get('email');
+            if (!passwortVonUebergebeneAnfrage || !emailVonUebergebeneAnfrage) { //wenn eins davon leer bzw falsch ist dann gebe error zurück
                 return "error";
             }
-            try {
-                let userArray = await this.userCollection.find({email: email, password: psw}).toArray();
-                if (userArray && userArray.length === 0) {
-                    return "error_user_not_found";
+            
+                let benutzerArray = await this.nutzerCollection.find({email: emailVonUebergebeneAnfrage, password: passwortVonUebergebeneAnfrage}).toArray(); //warte darauf dass in der collection alle einträge gefunden werden, die mit der email nd passwort übereinstimmen und speichere sie in einem array
+                if (benutzerArray.length === 0) { //wenn das array leer ist, ist auch kein benutzer vorhanden, also error ausgeben
+                    return "Benutzer konnte nicht gefunden werden";
                 }
-            } catch (e) {
-                return e.message;
-            }
-            return "success";
+           
+            return "Erfolgreich angemeldet!"; //ansonsten gebe success zurück, um ein erfolgreiches einloggen zu simulieren
         }
 
-        private async handleRegister(params: URLSearchParams): Promise<string> {
-            if (!this.userCollection) {
-                return "db_error";
-            }
-            let vorname = params.get('vorname');
-            let nachname = params.get('nachname');
-            let password = params.get('password');
-            let email = params.get('email');
+        private async registrierMethode(params: URLSearchParams): Promise<string> { //parameter der url werden übergeben, ein string wird zurückgegeben
+            if (!this.nutzerCollection) { //erneuter test ob die datenbank auch verbunden ist, wenn nein dann error
+                return "Fehler mit der Datenbank";
+            }//wenn ja dann 
+            let vornameVonUebergebeneAnfrage = params.get('vorname');//speichere die parameter des vornames in die variable vorname, genauso auch bei den restlihcen
+            let nachnameVonUebergebeneAnfrage = params.get('nachname');
+            let passwordVonUebergebeneAnfrage = params.get('password');
+            let VonUebergebeneAnfrage = params.get('email');
 
-            if (!vorname || !nachname || !password || !email) {
-                return "data_error";
+            if (!vornameVonUebergebeneAnfrage || !nachnameVonUebergebeneAnfrage || !passwordVonUebergebeneAnfrage || !VonUebergebeneAnfrage) { //wenn eins davon leer oder falsch ist gebe error aus
+                return "Etwas wurde nicht angegeben!";
             }
 
-            try {
-                let userArray = await this.userCollection.find({email: email}).toArray();
-                if (userArray && userArray.length > 0) {
-                    return "already_existing_error";
+            
+                let benutzerArray = await this.nutzerCollection.find({email: VonUebergebeneAnfrage}).toArray(); // selbe prinzip wie die methode handleLogin
+                if (benutzerArray && benutzerArray.length > 0) { //wenn der array und die länge des arrays größer als 0 sind heißt es, dass es unter dieser email addresse bereits einen nutzer gibt
+                    return "Dieser Benutzer existiert bereits.";
                 }
 
-                await this.userCollection.insertOne({
-                    vorname: vorname,
-                    nachname: nachname,
-                    password: password,
-                    email: email
+                await this.nutzerCollection.insertOne({ //wenn das nicht der fall ist dann füge in die collection vorname, nachname passwort und email ein
+                    vorname: vornameVonUebergebeneAnfrage,
+                    nachname: nachnameVonUebergebeneAnfrage,
+                    password: passwordVonUebergebeneAnfrage,
+                    email: VonUebergebeneAnfrage
                 });
-            } catch (e) {
-                return e.message;
-            }
-            return "success";
+           
+            return "Account wurde erfolgreich angelegt"; //bei erfolgreichen abschließen der aktion
         }
 
-        private async getUserList(): Promise<string> {
-            if (!this.userCollection) {
-                return "db_error";
+        private async getBenutzerMethode(): Promise<string> {
+            if (!this.nutzerCollection) { //db test
+                return "Fehler mit der Datenbank";
             }
-            let userArray = await this.userCollection.find({}).toArray();
-            if (userArray.length === 0) {
-                return "no user in list";
+            let benutzerArray = await this.nutzerCollection.find({}).toArray(); //finde alle einträge in der usercollection
+            if (benutzerArray.length === 0) { //array = 0 bedeutet kein eintrag
+                return "Kein Benutzer gefunden";
             }
 
-            let response = "<pre>";
-            userArray.forEach((entry) => {
-                response += entry.vorname + " " + entry.nachname + "\r\n";
+            let antwort = "<pre>"; // html tag zur darstellung von text, somit kann ich die gewünschten daten direkt formatiert ausgeben
+            benutzerArray.forEach((entry) => {
+                antwort += entry.vorname + " " + entry.nachname + "\r\n";
             });
-            response += "</pre>";
-            return response;
+            antwort += "</pre>";
+            return antwort; //gebe die antwort zurück
         }
     }
 }
 
-new A08Server.Server();
+new Server.ServerKlasse();/*Einstiegspunkt*/
 

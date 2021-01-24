@@ -55,193 +55,171 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.A08Server = void 0;
+exports.Server = void 0;
 var Http = __importStar(require("http"));
 var Mongo = __importStar(require("mongodb"));
 var url_1 = require("url");
-var A08Server;
-(function (A08Server) {
-    var Server = /** @class */ (function () {
-        function Server() {
-            this.db = null;
-            this.userCollection = null;
-            this.db_name = "phillip";
-            this.mongodb_connection_url = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/" + this.db_name + "?retryWrites=true&w=majority";
-            console.log("Starting server");
-            this.http_port = Number(process.env.PORT);
-            if (!this.http_port)
+var Server;
+(function (Server) {
+    var ServerKlasse = /** @class */ (function () {
+        function ServerKlasse() {
+            this.db = null; /*Null weil server noch nicht gestartet*/
+            this.nutzerCollection = null; /*Findet collection nicht da server nicht gestartet, daher null*/
+            this.dbName = "phillip";
+            this.mongodbVerbindungsURL = "mongodb+srv://gispaulphillip:v1Ba0P5lT5lHe8jv@gispaulphillipwise2020.xf65h.mongodb.net/" + this.dbName + "?retryWrites=true&w=majority";
+            console.log("Starte den Server"); //Ausgabe für mich selbst
+            this.http_port = Number(process.env.PORT); //Übergibt this.http_port den Port der Anfrage
+            if (!this.http_port) //wenn kein Port übergeben wurde dann 8100 port speichern
                 this.http_port = 8100;
-            this.connectDatabase();
-            this.startHttpServer();
+            this.datenbankVerbinden(); //Startet Methode zum Verbinden zum Server
+            this.httpServerStarten(); //Startet Methode zum Erstellen des Servers
         }
-        Server.prototype.startHttpServer = function () {
-            Http.createServer(this.onMessage.bind(this)).listen(this.http_port);
+        ServerKlasse.prototype.httpServerStarten = function () {
+            Http.createServer(this.ServerAntwort.bind(this)).listen(this.http_port); //Erstellt den Server und bindet an die Methode onMessage, durch das listen befindet er sich in einem dauerzustand und schaltet nicht direkt wieder ab
         };
-        Server.prototype.onMessage = function (req, res) {
+        ServerKlasse.prototype.ServerAntwort = function (req, res) {
             return __awaiter(this, void 0, void 0, function () {
-                var responseText, url, _a, e_1;
+                var antwortText, url, _a;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
-                            console.log("Message received: ", req.url);
-                            responseText = '404';
-                            if (req.url === "/") {
-                                res.write(responseText);
-                                res.end();
+                            console.log("Nachricht angekommen: ", req.url); //um die requeste Url anzuzeigen.
+                            antwortText = 'URL ist falsch';
+                            if (req.url === "/") { //falls URL leer ist 
+                                res.write(antwortText); //schreibe die Server Antwort
+                                res.end(); //und beende die response
                                 return [2 /*return*/];
                             }
-                            _b.label = 1;
-                        case 1:
-                            _b.trys.push([1, 9, , 10]);
                             url = new url_1.URL(req.url, "http://localhost:" + this.http_port);
                             _a = url.pathname;
                             switch (_a) {
-                                case "/login": return [3 /*break*/, 2];
-                                case "/register": return [3 /*break*/, 4];
-                                case "/list": return [3 /*break*/, 6];
+                                case "/login": return [3 /*break*/, 1];
+                                case "/register": return [3 /*break*/, 3];
+                                case "/liste": return [3 /*break*/, 5];
                             }
-                            return [3 /*break*/, 8];
-                        case 2: return [4 /*yield*/, this.handleLogin(url.searchParams)];
-                        case 3:
-                            responseText = _b.sent();
-                            return [3 /*break*/, 8];
-                        case 4: return [4 /*yield*/, this.handleRegister(url.searchParams)];
-                        case 5:
-                            responseText = _b.sent();
-                            return [3 /*break*/, 8];
-                        case 6: return [4 /*yield*/, this.getUserList()];
+                            return [3 /*break*/, 7];
+                        case 1: return [4 /*yield*/, this.loginMethode(url.searchParams)];
+                        case 2:
+                            antwortText = _b.sent(); //handlelogin wird aufgerufen und es werden die Parameter der angefragten url übergeben, die antwort der methode wird in responsetext gespeichert
+                            return [3 /*break*/, 7];
+                        case 3: return [4 /*yield*/, this.registrierMethode(url.searchParams)];
+                        case 4:
+                            antwortText = _b.sent(); //das selbe nur für die handleregisterMethode
+                            return [3 /*break*/, 7];
+                        case 5: return [4 /*yield*/, this.getBenutzerMethode()];
+                        case 6:
+                            antwortText = _b.sent(); //das selbe nur für die userlist methode
+                            return [3 /*break*/, 7];
                         case 7:
-                            responseText = _b.sent();
-                            return [3 /*break*/, 8];
-                        case 8: return [3 /*break*/, 10];
-                        case 9:
-                            e_1 = _b.sent();
-                            console.log(e_1);
-                            return [3 /*break*/, 10];
-                        case 10:
-                            res.write(responseText);
-                            res.end();
+                            res.write(antwortText); //wird and den client zurückgegeben
+                            res.end(); //beendet den responseprozess
                             return [2 /*return*/];
                     }
                 });
             });
         };
-        Server.prototype.connectDatabase = function () {
+        ServerKlasse.prototype.datenbankVerbinden = function () {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            this.db = new Mongo.MongoClient(this.mongodb_connection_url, { useNewUrlParser: true });
+                            this.db = new Mongo.MongoClient(this.mongodbVerbindungsURL, { useNewUrlParser: true }); //anlegen der MongoDb variable, beinhaltet mongo db link mit passwort und login zur DB
                             return [4 /*yield*/, this.db.connect()];
                         case 1:
-                            _a.sent();
-                            this.userCollection = this.db.db(this.db_name).collection("benutzer");
+                            _a.sent(); //wartet darauf mit der db zu verbinden
+                            this.nutzerCollection = this.db.db(this.dbName).collection("benutzer"); //speichert die collection benutzen in usercollection
                             return [2 /*return*/];
                     }
                 });
             });
         };
-        Server.prototype.handleLogin = function (params) {
+        ServerKlasse.prototype.loginMethode = function (params) {
             return __awaiter(this, void 0, void 0, function () {
-                var psw, email, userArray, e_2;
+                var passwortVonUebergebeneAnfrage, emailVonUebergebeneAnfrage, benutzerArray;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!this.userCollection) {
-                                return [2 /*return*/, "db_error"];
+                            if (!this.nutzerCollection) { // wenn die usercollection nicht vorhanden, dann db error
+                                return [2 /*return*/, "Fehler mit der Datenbank"];
                             }
-                            psw = params.get('password');
-                            email = params.get('email');
-                            if (!psw || !email) {
+                            passwortVonUebergebeneAnfrage = params.get('password');
+                            emailVonUebergebeneAnfrage = params.get('email');
+                            if (!passwortVonUebergebeneAnfrage || !emailVonUebergebeneAnfrage) { //wenn eins davon leer bzw falsch ist dann gebe error zurück
                                 return [2 /*return*/, "error"];
                             }
-                            _a.label = 1;
+                            return [4 /*yield*/, this.nutzerCollection.find({ email: emailVonUebergebeneAnfrage, password: passwortVonUebergebeneAnfrage }).toArray()];
                         case 1:
-                            _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, this.userCollection.find({ email: email, password: psw }).toArray()];
-                        case 2:
-                            userArray = _a.sent();
-                            if (userArray && userArray.length === 0) {
-                                return [2 /*return*/, "error_user_not_found"];
+                            benutzerArray = _a.sent();
+                            if (benutzerArray.length === 0) { //wenn das array leer ist, ist auch kein benutzer vorhanden, also error ausgeben
+                                return [2 /*return*/, "Benutzer konnte nicht gefunden werden"];
                             }
-                            return [3 /*break*/, 4];
-                        case 3:
-                            e_2 = _a.sent();
-                            return [2 /*return*/, e_2.message];
-                        case 4: return [2 /*return*/, "success"];
+                            return [2 /*return*/, "Erfolgreich angemeldet!"]; //ansonsten gebe success zurück, um ein erfolgreiches einloggen zu simulieren
                     }
                 });
             });
         };
-        Server.prototype.handleRegister = function (params) {
+        ServerKlasse.prototype.registrierMethode = function (params) {
             return __awaiter(this, void 0, void 0, function () {
-                var vorname, nachname, password, email, userArray, e_3;
+                var vornameVonUebergebeneAnfrage, nachnameVonUebergebeneAnfrage, passwordVonUebergebeneAnfrage, VonUebergebeneAnfrage, benutzerArray;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!this.userCollection) {
-                                return [2 /*return*/, "db_error"];
+                            if (!this.nutzerCollection) { //erneuter test ob die datenbank auch verbunden ist, wenn nein dann error
+                                return [2 /*return*/, "Fehler mit der Datenbank"];
+                            } //wenn ja dann 
+                            vornameVonUebergebeneAnfrage = params.get('vorname');
+                            nachnameVonUebergebeneAnfrage = params.get('nachname');
+                            passwordVonUebergebeneAnfrage = params.get('password');
+                            VonUebergebeneAnfrage = params.get('email');
+                            if (!vornameVonUebergebeneAnfrage || !nachnameVonUebergebeneAnfrage || !passwordVonUebergebeneAnfrage || !VonUebergebeneAnfrage) { //wenn eins davon leer oder falsch ist gebe error aus
+                                return [2 /*return*/, "Etwas wurde nicht angegeben!"];
                             }
-                            vorname = params.get('vorname');
-                            nachname = params.get('nachname');
-                            password = params.get('password');
-                            email = params.get('email');
-                            if (!vorname || !nachname || !password || !email) {
-                                return [2 /*return*/, "data_error"];
-                            }
-                            _a.label = 1;
+                            return [4 /*yield*/, this.nutzerCollection.find({ email: VonUebergebeneAnfrage }).toArray()];
                         case 1:
-                            _a.trys.push([1, 4, , 5]);
-                            return [4 /*yield*/, this.userCollection.find({ email: email }).toArray()];
-                        case 2:
-                            userArray = _a.sent();
-                            if (userArray && userArray.length > 0) {
-                                return [2 /*return*/, "already_existing_error"];
+                            benutzerArray = _a.sent();
+                            if (benutzerArray && benutzerArray.length > 0) { //wenn der array und die länge des arrays größer als 0 sind heißt es, dass es unter dieser email addresse bereits einen nutzer gibt
+                                return [2 /*return*/, "Dieser Benutzer existiert bereits."];
                             }
-                            return [4 /*yield*/, this.userCollection.insertOne({
-                                    vorname: vorname,
-                                    nachname: nachname,
-                                    password: password,
-                                    email: email
+                            return [4 /*yield*/, this.nutzerCollection.insertOne({
+                                    vorname: vornameVonUebergebeneAnfrage,
+                                    nachname: nachnameVonUebergebeneAnfrage,
+                                    password: passwordVonUebergebeneAnfrage,
+                                    email: VonUebergebeneAnfrage
                                 })];
-                        case 3:
+                        case 2:
                             _a.sent();
-                            return [3 /*break*/, 5];
-                        case 4:
-                            e_3 = _a.sent();
-                            return [2 /*return*/, e_3.message];
-                        case 5: return [2 /*return*/, "success"];
+                            return [2 /*return*/, "Account wurde erfolgreich angelegt"]; //bei erfolgreichen abschließen der aktion
                     }
                 });
             });
         };
-        Server.prototype.getUserList = function () {
+        ServerKlasse.prototype.getBenutzerMethode = function () {
             return __awaiter(this, void 0, void 0, function () {
-                var userArray, response;
+                var benutzerArray, antwort;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!this.userCollection) {
-                                return [2 /*return*/, "db_error"];
+                            if (!this.nutzerCollection) { //db test
+                                return [2 /*return*/, "Fehler mit der Datenbank"];
                             }
-                            return [4 /*yield*/, this.userCollection.find({}).toArray()];
+                            return [4 /*yield*/, this.nutzerCollection.find({}).toArray()];
                         case 1:
-                            userArray = _a.sent();
-                            if (userArray.length === 0) {
-                                return [2 /*return*/, "no user in list"];
+                            benutzerArray = _a.sent();
+                            if (benutzerArray.length === 0) { //array = 0 bedeutet kein eintrag
+                                return [2 /*return*/, "Kein Benutzer gefunden"];
                             }
-                            response = "<pre>";
-                            userArray.forEach(function (entry) {
-                                response += entry.vorname + " " + entry.nachname + "\r\n";
+                            antwort = "<pre>";
+                            benutzerArray.forEach(function (entry) {
+                                antwort += entry.vorname + " " + entry.nachname + "\r\n";
                             });
-                            response += "</pre>";
-                            return [2 /*return*/, response];
+                            antwort += "</pre>";
+                            return [2 /*return*/, antwort]; //gebe die antwort zurück
                     }
                 });
             });
         };
-        return Server;
+        return ServerKlasse;
     }());
-    A08Server.Server = Server;
-})(A08Server = exports.A08Server || (exports.A08Server = {}));
-new A08Server.Server();
+    Server.ServerKlasse = ServerKlasse;
+})(Server = exports.Server || (exports.Server = {}));
+new Server.ServerKlasse(); /*Einstiegspunkt*/
